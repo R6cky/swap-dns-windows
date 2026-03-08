@@ -3,7 +3,7 @@
 # =========================
 $configPath = "C:\\system_32\config.json"
 $config = Get-Content  $configPath | ConvertFrom-Json
-$wifiRaw = netsh wlan show interfaces
+$count = 0
 
 function Write-Log {
     param ($message)
@@ -42,7 +42,20 @@ function Internet-OK {
     $http = Test-HTTP
     Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
 
+    if(($ping -and $http) -and ($dns -eq $false)){
+        Write-Log "Apenas a resolução de nomes está falhando..."
+        return "change-dns"
+    }
+
     return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($pingh -and $dns))
+}
+
+
+
+function ChangeDns {
+   if((Internet-OK) -eq "change-dns"){
+      Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("8.8.8.8","8.8.4.4")
+   }
 }
 
 
@@ -55,27 +68,6 @@ function Ethernet-Chek {
     return $adapter.Status
 }
 
-
-function Wifi-Chek {
-    $adapter = Get-NetAdapter -Name $config.wifiAdapter
-    return $adapter.Status
-}
-
-
-
-function Wifi-Connected-Status{
-    $output = netsh wlan show interfaces
-    $wifiInfo = @{}
-
-    foreach ($line in $output) {
-        if ($line -match "^\s*(.+?)\s*:\s*(.+)$") {
-            $wifiInfo[$matches[1].Trim()] = $matches[2].Trim()
-        }
-    }
-
-    $wifiObject = [PSCustomObject]$wifiInfo
-    return $wifiObject
-}
 
 
 # =========================
@@ -91,21 +83,6 @@ function Disable-Ethernet {
     Disable-NetAdapter -Name $config.ethernetAdapter -Confirm:$false
 }
 
-function Enable-Wifi {
-    Write-Log "Habilitando Adaptador Wireless"
-    Enable-NetAdapter -Name $config.wifiAdapter -Confirm:$false
-}
-
-
-function Connect-Wifi{
-    Write-Log "Conectando na rede wireless $($config.wifiProfile)"
-    netsh wlan connect name="$($config.wifiProfile)" | Out-Null
-}
-
-function Disable-Wifi {
-    Write-Log "Desabilitando Adaptador Wireless..."
-    Disable-NetAdapter -Name $config.wifiAdapter -Confirm:$false
-}
 
 # =========================
 # Main loop
@@ -126,7 +103,7 @@ while ($true) {
         }
 
         if(((Ethernet-Chek) -eq "Disconnected") -or ((Ethernet-Chek) -eq "Desconectado") ){
-            Write-Log "Verifique o cabo de rede está devidamente conectado nas duas extremidades."
+            Write-Log "Verifique o cabo de rede  devidamente conectado nas duas extremidades."
             Write-Log "Retire-o e conecte novamente no conector do computador e do ponto de rede"
             Write-Log "------------------------------------------"
 
@@ -135,53 +112,15 @@ while ($true) {
         if((Ethernet-Chek) -eq "Up" -and (Internet-OK)){
             Write-Log "Teste de conexão em rede cabeada." 
             Write-Log "A internet esta OK. Utilzando internet cabeada"
-            if ((Wifi-Chek) -eq "Disabled") { Write-Log " O adaptador wireles esta desabilitado" } else { (Disable-Wifi) }
-            Write-Log "------------------------------------------"
+
             Start-Sleep -Seconds $config.checkIntervalSeconds
+
             continue
         }else{
             Write-Log "A Conexao cabeada esta com problemas"
             Write-Log "$(Internet-OK)"
-
-            if((Wifi-Chek) -eq "Disabled" ){
-               (Enable-Wifi)
-            }else{
-                Write-Log "A Rede Wireless esta Habilitada."
-            }
-            Start-Sleep -Seconds 20
-            if(((Wifi-Connected-Status).Estado -eq "Conectado") -or ((Wifi-Connected-Status).State -eq "connected")){ 
-                Write-Log "Wifi conectado a rede [ $((Wifi-Connected-Status).SSID) ]"
-            }elseif(((Wifi-Connected-Status).Estado -eq "desconectado") -or ((Wifi-Connected-Status).State -eq "disconnected")){
-                (Connect-Wifi) 
-                
-            }
-
-            
-            (Disable-Ethernet)
-            
             Start-Sleep -Seconds $config.checkIntervalSeconds
         }
         
 
-
-        if((Wifi-Chek) -eq "Up" -and (Internet-OK)){
-                    Write-Log "----------------------------------------------------"
-                    Write-Log "A internet Wireless esta sendo utilizada..."
-                    Write-Log "----------------------------------------------------"
-                    Write-Log "SSID: $((Wifi-Connected-Status).SSID)"  
-                    Write-Log "----------------------------------------------------"
-                    Write-Log "Status: = $((Wifi-Chek))"
-                    Write-Log "----------------------------------------------------"
-
-        }else{
-                    (Internet-OK)
-                    Write-Log "A internet Wireless esta com problemas..."
-                    Write-Log "----------------------------------------------------"
-                    Write-Log "Info: SSID = $((Wifi-Connected-Status).SSID)"  
-                    Write-Log "Status da rede wifi = $(Wifi-Chek)"
-                    Write-Log "----------------------------------------------------"
-
-        }  
-        
-        
         }
