@@ -54,6 +54,7 @@ function Internet-OK {
 
 function ChangeDns {
    if((Internet-OK) -eq "change-dns"){
+      Write-Log "Configurando DNS para ->> primario: $() e secundario: $()  "
       Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("8.8.8.8","8.8.4.4")
    }
 }
@@ -119,6 +120,7 @@ while ($true) {
         }else{
             Write-Log "A Conexao cabeada esta com problemas"
             Write-Log "$(Internet-OK)"
+            Write-Log "$(ChangeDns)"
             Start-Sleep -Seconds $config.checkIntervalSeconds
         }
         

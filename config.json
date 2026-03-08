@@ -1,6 +1,8 @@
 {
   "ethernetAdapter": "Ethernet",
   "pingTarget": "8.8.8.8",
+  "primaryDNS": "8.8.8.8",
+  "secondaryDNS": "8.8.4.4",
   "dnsTestDomain": "www.google.com",
   "httpTestUrl": "https://www.google.com",
   "checkIntervalSeconds": 60,
