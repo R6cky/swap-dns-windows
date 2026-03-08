@@ -54,8 +54,8 @@ function Internet-OK {
 
 function ChangeDns {
    if((Internet-OK) -eq "change-dns"){
-      Write-Log "Configurando DNS para ->> primario: $() e secundario: $()  "
-      Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ("8.8.8.8","8.8.4.4")
+      Write-Log "Configurando DNS para ->> primario: $($config.primaryDNS) e secundario: $($config.secondaryDNS)"
+      Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)
    }
 }
 
