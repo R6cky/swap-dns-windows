@@ -3,4 +3,5 @@ try{
     write("Resolvido")
 }catch{
     write("Erro na resolução de nome")
+    ""
 }
