@@ -42,8 +42,9 @@ function Internet-OK {
     $http = Test-HTTP
     Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
 
-    if(($ping -and $http) -and ($dns -eq $false)){
-        Write-Log "Apenas a resolução de nomes está falhando..."
+    if((($ping -and $http) -and ($dns -eq $false)) -or !($dns -and $http)){
+        Write-Log "Possivel erro na resolução de nomes..."
+        (ChangeDns)
         return "change-dns"
     }
 
@@ -53,10 +54,18 @@ function Internet-OK {
 
 
 function ChangeDns {
-   if((Internet-OK) -eq "change-dns"){
+   if(((Internet-OK) -eq "change-dns") -and ($count -eq 4)){
       Write-Log "Configurando DNS para ->> primario: $($config.primaryDNS) e secundario: $($config.secondaryDNS)"
-      Set-DnsClientServerAddress -InterfaceAlias "Ethernet" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)
-   }
+      Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)   
+      Clear-DnsClientCache  
+      $count = 0
+      $config.checkIntervalSeconds = 60
+      continue
+    }
+   
+   $count += 1
+   $config.checkIntervalSeconds = 10
+   continue
 }
 
 
@@ -122,7 +131,11 @@ while ($true) {
             Write-Log "$(Internet-OK)"
             Write-Log "$(ChangeDns)"
             Start-Sleep -Seconds $config.checkIntervalSeconds
+            (ChangeDns)
         }
+
+
+
         
 
-        }
+}
