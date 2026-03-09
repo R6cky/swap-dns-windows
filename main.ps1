@@ -42,7 +42,7 @@ function Internet-OK {
     $http = Test-HTTP
     Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
 
-    if((($ping -and $http) -and ($dns -eq $false)) -or !($dns -and $http)){
+    if((($ping -and $http) -and ($dns -eq $false)) -or (!($dns -and $http))){
         Write-Log "Possivel erro na resolução de nomes..."
         (ChangeDns)
         return "change-dns"
@@ -62,7 +62,6 @@ function ChangeDns {
       $config.checkIntervalSeconds = 60
       continue
     }
-   
    $count += 1
    $config.checkIntervalSeconds = 10
    continue
