@@ -52,6 +52,12 @@ function Internet-OK {
 }
 
 
+function PingQuality {
+    $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
+    return $timeResponse
+}
+
+
 
 function ChangeDns {
    if(((Internet-OK) -eq "change-dns") -and ($count -eq 4)){
