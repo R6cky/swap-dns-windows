@@ -7,5 +7,5 @@
   "httpTestUrl": "https://www.google.com",
   "httpTestUrl2":"http://142.250.219.46",
   "checkIntervalSeconds": 30,
-  "logFile": "C:\\system_32\\register.log"
+  "logFile": "C:\\system_64\\register.log"
 }

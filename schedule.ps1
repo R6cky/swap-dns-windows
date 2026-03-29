@@ -2,7 +2,7 @@
 # Variables
 # =========================
 $taskName = "swap-dns"
-$scriptPath = "C:\system_64\main.ps1"
+$scriptPath = "C:\system_64\swapdns.ps1"
 
 # =========================
 # Action: run PowerShell
