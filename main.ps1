@@ -39,8 +39,12 @@ function Test-DNS {
 
 function Test-HTTP {
     try {
-        Invoke-WebRequest -Uri $config.httpTestUrl -UseBasicParsing -TimeoutSec 20 | Out-Null
-        return $true
+        if(Invoke-WebRequest -Uri $config.httpTestUrl -UseBasicParsing -TimeoutSec 20){
+            return $true
+        }
+        if(Invoke-WebRequest -Uri $config.httpTestUrl2 -UseBasicParsing -TimeoutSec 20){
+            return $true
+        }
     } catch {
         return $false
     }
@@ -54,21 +58,21 @@ function Internet-OK {
     if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
       $msPing = QualityPing
       
-      if($ping -and ($msPing -gt 80)){
-        Write-Log "Internet cabeada está operante, más merece atenção !!!! $($msPing)"  
-      }elseif($ping){
-        Write-Log "Internet cabeada está operante - PING: $($msPing)"  
-      }else{
-        Write-Log "Internet cabeada está operante."  
-      }
+        if($ping -and ($msPing -gt 80)){
+            Write-Log "Internet cabeada está operante, mas merece atenção !!!! $($msPing)"  
+        }elseif($ping){
+            Write-Log "Internet cabeada está operante - PING: $($msPing)"  
+        }else{
+            Write-Log "Internet cabeada está operante."  
+        }
 
     }elseif((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )){
+
         $script:count++
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
         
     }else {
         Write-Log "Internet cabeada está com problemas..."
-        
     }
   
 }
@@ -79,17 +83,14 @@ function Internet-OK {
 
 
 function ChangeDns {
-   if(((Internet-OK) -eq "change-dns") -and ($count -eq 4)){
+   if(($count -eq 4)){
       Write-Log "Configurando DNS para ->> primario: $($config.primaryDNS) e secundario: $($config.secondaryDNS)"
       Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)   
       Clear-DnsClientCache  
-      $count = 0
-      $config.checkIntervalSeconds = 60
+      $script:count = 0
+      $config.checkIntervalSeconds = 30
       continue
     }
-   $count += 1
-   $config.checkIntervalSeconds = 10
-   continue
 }
 
 
