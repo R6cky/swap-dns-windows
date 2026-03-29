@@ -1,19 +1,18 @@
-# =========================
 # Load config
-# =========================
 $configPath = "C:\\system_32\config.json"
 $config = Get-Content  $configPath | ConvertFrom-Json
 $count = 0
 
+#----------------------------------------------------------------------------
+#Log function
 function Write-Log {
     param ($message)
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     "$timestamp - $message" | Out-File -Append -FilePath $config.logFile
 }
 
-# =========================
+#----------------------------------------------------------------------------
 # Connectivity checks
-# =========================
 function Test-Ping {
     Test-Connection -ComputerName $config.pingTarget -Count 2 -Quiet
 }
@@ -56,7 +55,7 @@ function Internet-OK {
     $http = Test-HTTP
     
     if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
-      $msPing = QualityPing
+        $msPing = QualityPing
       
         if($ping -and ($msPing -gt 80)){
             Write-Log "Internet cabeada está operante, mas merece atenção !!!! $($msPing)"  
@@ -70,6 +69,7 @@ function Internet-OK {
 
         $script:count++
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
+        (ChangeDns)
         
     }else {
         Write-Log "Internet cabeada está com problemas..."
@@ -80,23 +80,22 @@ function Internet-OK {
 
 
 
-
-
+#----------------------------------------------------------------------------
+# change DNS function
 function ChangeDns {
-   if(($count -eq 4)){
+   if(($script:count -eq 4)){
       Write-Log "Configurando DNS para ->> primario: $($config.primaryDNS) e secundario: $($config.secondaryDNS)"
       Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)   
       Clear-DnsClientCache  
       $script:count = 0
-      $config.checkIntervalSeconds = 30
+      $config.checkIntervalSeconds = 10
       continue
+    }else{
+        continue
     }
 }
 
 
-#======================
-# Network Adapter checks
-#======================
 
 function Ethernet-Chek {
     $adapter = Get-NetAdapter -Name $config.ethernetAdapter
@@ -104,24 +103,14 @@ function Ethernet-Chek {
 }
 
 
-
-# =========================
-# Adapter control Functions 
-# =========================
 function Enable-Ethernet {
     Write-Log "Habilitando Adaptador Ethernet..."
     Enable-NetAdapter -Name $config.ethernetAdapter -Confirm:$false
 }
 
-function Disable-Ethernet {
-    Write-Log "Desabilitando Adaptador Ethernet..."
-    Disable-NetAdapter -Name $config.ethernetAdapter -Confirm:$false
-}
 
-
-# =========================
+#----------------------------------------------------------------------------
 # Main loop
-# =========================
 
 Write-Log "----------------------------------------------------"
 Write-Log "Script iniciado."
@@ -138,29 +127,14 @@ while ($true) {
         }
 
         if(((Ethernet-Chek) -eq "Disconnected") -or ((Ethernet-Chek) -eq "Desconectado") ){
-            Write-Log "Verifique o cabo de rede  devidamente conectado nas duas extremidades."
+            Write-Log "Verifique se o cabo de rede esta devidamente conectado nas duas extremidades..."
             Write-Log "Retire-o e conecte novamente no conector do computador e do ponto de rede"
-            Write-Log "------------------------------------------"
+            Write-Log "----------------------------------------------------"
 
         }
 
         if((Ethernet-Chek) -eq "Up" -and (Internet-OK)){
-            Write-Log "Teste de conexão em rede cabeada." 
-            Write-Log "A internet esta OK. Utilzando internet cabeada"
-
-            Start-Sleep -Seconds $config.checkIntervalSeconds
-
             continue
-        }else{
-            Write-Log "A Conexao cabeada esta com problemas"
-            Write-Log "$(Internet-OK)"
-            Write-Log "$(ChangeDns)"
-            Start-Sleep -Seconds $config.checkIntervalSeconds
-            (ChangeDns)
         }
-
-
-
-        
-
+            
 }
