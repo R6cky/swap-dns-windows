@@ -1,7 +1,8 @@
 # Load config
-$configPath = "C:\\system_32\config.json"
+$configPath = "C:\\system_64\config.json"
 $config = Get-Content  $configPath | ConvertFrom-Json
-$count = 0
+$countDnsFailure = 0
+
 
 #----------------------------------------------------------------------------
 #Log function
@@ -57,18 +58,19 @@ function Internet-OK {
     if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
         $msPing = QualityPing
       
-        if($ping -and ($msPing -gt 80)){
-            Write-Log "Internet cabeada está operante, mas merece atenção !!!! $($msPing)"  
+        if($ping -and ($msPing -gt 100)){
+
+            Write-Log "Internet cabeada está operante, mas merece atenção !!!! PING: $($msPing)"  
         }elseif($ping){
-            Write-Log "Internet cabeada está operante - PING: $($msPing)"  
+            Write-Log "Internet cabeada está operante - PING: $($msPing) ms"  
         }else{
-            Write-Log "Internet cabeada está operante."  
+            Write-Log "Internet cabeada está operante. [ Ping pode estar bloqueado. ]"  
         }
 
     }elseif((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )){
 
-        $script:count++
-        Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
+        Write-Log "Houve um problema com a resolução de nomes... contagem: $($script:countDnsFailure)"
+        $script:countDnsFailure++
         (ChangeDns)
         
     }else {
@@ -83,12 +85,12 @@ function Internet-OK {
 #----------------------------------------------------------------------------
 # change DNS function
 function ChangeDns {
-   if(($script:count -eq 4)){
+   if(($script:countDnsFailure -eq 4)){
       Write-Log "Configurando DNS para ->> primario: $($config.primaryDNS) e secundario: $($config.secondaryDNS)"
       Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)   
       Clear-DnsClientCache  
-      $script:count = 0
-      $config.checkIntervalSeconds = 10
+      $script:countDnsFailure = 0
+      $config.checkIntervalSeconds = 30
       continue
     }else{
         continue
@@ -120,7 +122,7 @@ Write-Log "----------------------------------------------------"
 while ($true) {
         
 
-        if((Ethernet-Chek) -eq "Disabled"){
+        if(((Ethernet-Chek) -eq "Disabled") -or ((Ethernet-Chek) -eq "Not Present")){
             Write-Log "A rede cabeada estava desabilitada."
             (Enable-Ethernet)
             Start-Sleep -Seconds 20
@@ -130,7 +132,7 @@ while ($true) {
             Write-Log "Verifique se o cabo de rede esta devidamente conectado nas duas extremidades..."
             Write-Log "Retire-o e conecte novamente no conector do computador e do ponto de rede"
             Write-Log "----------------------------------------------------"
-
+            Start-Sleep -Seconds 20 
         }
 
         if((Ethernet-Chek) -eq "Up" -and (Internet-OK)){

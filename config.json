@@ -1,5 +1,6 @@
 {
-  "ethernetAdapter": "Ethernet",
+  "ethernetAdapter": "Wi-fi",
+ 
   "pingTarget": "8.8.8.8",
   "primaryDNS": "8.8.8.8",
   "secondaryDNS": "1.1.1.1",
@@ -9,3 +10,4 @@
   "checkIntervalSeconds": 30,
   "logFile": "C:\\system_64\\register.log"
 }
+
