@@ -18,9 +18,14 @@ function Test-Ping {
     Test-Connection -ComputerName $config.pingTarget -Count 2 -Quiet
 }
 
-function PingQuality {
-    $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
-    return $timeResponse
+function QualityPing {
+    try {
+         $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
+         return $timeResponse
+    }
+    catch {
+      return $false
+    }
 }
 
 function Test-DNS {
@@ -28,9 +33,6 @@ function Test-DNS {
         Resolve-DnsName $config.dnsTestDomain -ErrorAction Stop | Out-Null
         return $true
     } catch {
-        
-        $script:count+= 1
-        Write-Log "Possível erro na resolução de nomes...[contagem do erro: $($count)]"
         return $false
     }
 }
@@ -48,8 +50,18 @@ function Internet-OK {
     $ping = Test-Ping
     $dns  = Test-DNS
     $http = Test-HTTP
+    
     if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
-        
+      $msPing = QualityPing
+      
+      if($ping -and ($msPing -gt 80)){
+        Write-Log "Internet cabeada está operante, más merece atenção !!!! $($msPing)"  
+      }elseif($ping){
+        Write-Log "Internet cabeada está operante - PING: $($msPing)"  
+      }else{
+        Write-Log "Internet cabeada está operante."  
+      }
+
     }elseif((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )){
         $script:count++
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
@@ -58,9 +70,7 @@ function Internet-OK {
         Write-Log "Internet cabeada está com problemas..."
         
     }
-    #Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
-
-    #return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns))
+  
 }
 
 
