@@ -23,6 +23,9 @@ function Test-DNS {
         Resolve-DnsName $config.dnsTestDomain -ErrorAction Stop | Out-Null
         return $true
     } catch {
+        
+        $script:count+= 1
+        Write-Log "Possível erro na resolução de nomes...[contagem do erro: $($count)]"
         return $false
     }
 }
@@ -40,15 +43,19 @@ function Internet-OK {
     $ping = Test-Ping
     $dns  = Test-DNS
     $http = Test-HTTP
-    Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
-
-    if((($ping -and $http) -and ($dns -eq $false)) -or (!($dns -and $http))){
-        Write-Log "Possivel erro na resolução de nomes..."
-        (ChangeDns)
-        return "change-dns"
+    if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
+        return $true
+    }elseif(!$dns){
+        $script:count++
+        Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
+        return $false
+    }else {
+        Write-Log "Internet cabeada está com problemas..."
+        return $false
     }
+    #Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
 
-    return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($pingh -and $dns))
+    return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns))
 }
 
 
