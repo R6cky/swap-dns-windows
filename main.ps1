@@ -18,6 +18,11 @@ function Test-Ping {
     Test-Connection -ComputerName $config.pingTarget -Count 2 -Quiet
 }
 
+function PingQuality {
+    $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
+    return $timeResponse
+}
+
 function Test-DNS {
     try {
         Resolve-DnsName $config.dnsTestDomain -ErrorAction Stop | Out-Null
@@ -44,25 +49,22 @@ function Internet-OK {
     $dns  = Test-DNS
     $http = Test-HTTP
     if(($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns)){
-        return $true
-    }elseif(!$dns){
+        
+    }elseif((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )){
         $script:count++
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($count)"
-        return $false
+        
     }else {
         Write-Log "Internet cabeada está com problemas..."
-        return $false
+        
     }
     #Write-Log "Ping=$ping | DNS=$dns | HTTP=$http | $wifiObject" 
 
-    return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns))
+    #return (($ping -and $dns -and $http) -or ($dns -and $http) -or ($ping -and $dns))
 }
 
 
-function PingQuality {
-    $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
-    return $timeResponse
-}
+
 
 
 
