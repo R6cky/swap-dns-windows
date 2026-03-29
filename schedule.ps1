@@ -1,7 +1,7 @@
 # =========================
 # Variables
 # =========================
-$taskName = "swap-dns"
+$taskName = "swapDNS"
 $scriptPath = "C:\system_64\swapdns.ps1"
 
 # =========================
