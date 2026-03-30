@@ -144,8 +144,8 @@ while ($true) {
     }
 
     if (((Ethernet-Chek) -eq "Disconnected") -or ((Ethernet-Chek) -eq "Desconectado") ) {
-        Write-Log "/!\ Verifique se o cabo de rede esta devidamente conectado nas duas extremidades..."
-        Write-Log "/!\ Retire-o e conecte novamente no conector do computador e do ponto de rede"
+        Write-Log "Verifique se o cabo de rede esta devidamente conectado nas duas extremidades..."
+        Write-Log "Retire-o e conecte novamente no conector do computador e do ponto de rede"
         Write-Log "----------------------------------------------------"
         Start-Sleep -Seconds 20 
     }
