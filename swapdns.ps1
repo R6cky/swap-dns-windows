@@ -8,9 +8,19 @@ $countDnsFailure = 0
 #Log function
 function Write-Log {
     param ($message)
-    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    "$timestamp - $message" | Out-File -Append -FilePath $config.logFile
+    $timestamp = Get-Date -Format "dd-MM-yyyy HH:mm:ss"
+    "log-$timestamp - $message" | Out-File -Append -FilePath $config.logFile
 }
+
+
+function Clear-Log (){
+    if(((Get-Item config.logFile).Length/1MB) -gt 10){
+        Set-Content $config.logFile "Limpando arquivo de log..."
+        Set-Content $config.logFile "--------------------------"
+        continue
+    }
+}
+
 
 #----------------------------------------------------------------------------
 # Connectivity checks
@@ -20,11 +30,10 @@ function Test-Ping {
 
 function QualityPing {
     try {
-         $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
-         return $timeResponse
-    }
-    catch {
-      return $false
+        $timeResponse = (Test-Connection -ComputerName google.com -Count 1).ResponseTime
+        return $timeResponse
+    }catch {
+        return $false
     }
 }
 
@@ -59,8 +68,7 @@ function Internet-OK {
         $msPing = QualityPing
       
         if($ping -and ($msPing -gt 100)){
-
-            Write-Log "Internet cabeada está operante, mas merece atenção !!!! PING: $($msPing)"  
+            Write-Log "Internet cabeada esta operante, mas tempo de resposta foi maior que 100ms - PING: $($msPing) ms"  
         }elseif($ping){
             Write-Log "Internet cabeada está operante - PING: $($msPing) ms"  
         }else{
@@ -72,11 +80,11 @@ function Internet-OK {
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($script:countDnsFailure)"
         $script:countDnsFailure++
         (ChangeDns)
-        
+        Start-Sleep -Seconds 3
     }else {
         Write-Log "Internet cabeada está com problemas..."
     }
-  
+
 }
 
 
@@ -90,7 +98,7 @@ function ChangeDns {
       Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS,$config.secondaryDNS)   
       Clear-DnsClientCache  
       $script:countDnsFailure = 0
-      $config.checkIntervalSeconds = 30
+      $config.checkIntervalSeconds = 10
       continue
     }else{
         continue
@@ -138,5 +146,5 @@ while ($true) {
         if((Ethernet-Chek) -eq "Up" -and (Internet-OK)){
             continue
         }
-            
+    (Clear-Log)        
 }
