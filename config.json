@@ -4,7 +4,7 @@
   "pingTarget": "8.8.8.8",
   "primaryDNS": "8.8.8.8",
   "secondaryDNS": "1.1.1.1",
-  "dnsTestDomain": "www.google.com",
+  "dnsTestDomain": "google.com",
   "httpTestUrl": "https://www.google.com",
   "httpTestUrl2":"http://142.250.219.46",
   "checkIntervalSeconds": 30,
