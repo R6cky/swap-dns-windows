@@ -14,10 +14,10 @@ function Write-Log {
 
 
 function Clear-Log () {
-    if (((Get-Item $config.logFile).Length / 1MB) -gt 10) {
+    if (((Get-Item $config.logFile).Length / 1MB) -gt 1) {
         Write-Log "Arquivo de log maior que 10MB"
         Write-Log "Limpando arquivo de log..."
-        Set-Content $config.logFile ""
+        Clear-Content $config.logFile
         continue
     }
 }
