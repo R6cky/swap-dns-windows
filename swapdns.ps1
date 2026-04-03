@@ -106,10 +106,9 @@ function ChangeDns {
         Set-DnsClientServerAddress -InterfaceAlias "Wi-Fi" -ServerAddresses ($config.primaryDNS, $config.secondaryDNS)   
         Clear-DnsClientCache  
         $script:countDnsFailure = 0
-        $config.checkIntervalSeconds = 10
         continue
-    }
-    else {
+    } else {
+        $config.checkIntervalSeconds = 10
         continue
     }
 }
