@@ -14,12 +14,18 @@ function Write-Log {
 
 
 function Clear-Log () {
-    if (((Get-Item $config.logFile).Length / 1MB) -gt 1) {
+    if (((Get-Item $config.logFile).Length / 1MB) -gt 10) {
         Clear-Content $config.logFile
         Write-Log "Arquivo de log maior que 10MB"
         Write-Log "Limpando arquivo de log..."
         continue
     }
+}
+
+
+function Length-File (){
+    param ($file)
+    return ((Get-Item $file).Length / 1MB)
 }
 
 
@@ -84,10 +90,10 @@ function Internet-OK {
     }
     elseif ((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )) {
 
-        Write-Log "Houve um problema com a resolução de nomes... contagem: $($script:countDnsFailure)"
         $script:countDnsFailure++
+        Write-Log "Houve um problema com a resolução de nomes... contagem: $($script:countDnsFailure)"
         (ChangeDns)
-        Start-Sleep -Seconds 3
+        continue
     }
     else {
         Write-Log "Internet cabeada está com problemas..."
@@ -133,8 +139,9 @@ function Enable-Ethernet {
 
 Write-Log "Script iniciado."
 
-
 while ($true) {
+
+    Write-Log "Tamanho do arquivo de log: $((Length-File($config.logFile)).ToString('F2')) MB"
     
     if (((Ethernet-Chek) -eq "Disabled") -or ((Ethernet-Chek) -eq "Not Present")) {
         Write-Log "A rede cabeada estava desabilitada."
