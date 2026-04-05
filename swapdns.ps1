@@ -1,3 +1,5 @@
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
 # Load config
 $configPath = "C:\\system_64\config.json"
 $config = Get-Content  $configPath | ConvertFrom-Json
