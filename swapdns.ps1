@@ -29,6 +29,26 @@ function Length-File (){
 }
 
 
+
+function Blocked-Ports(){
+  
+    # $pzabbixServerDns = (Test-NetConnection -ComputerName "pollux.tolife.app" -Port 10051).TcpTestSucceeded
+    # $pzabbixServerIP = (Test-NetConnection -ComputerName "136.112.57.247" -Port 10051).TcpTestSucceeded
+    # $pzabbixAgentLocal = (Test-NetConnection -ComputerName "localhost" -Port 10050).TcpTestSucceeded
+    # $pzabbixAgentIP = (Test-NetConnection -ComputerName "127.0.0.1" -Port 10050).TcpTestSucceeded
+
+    $pzabbixServerDns = (Test-NetConnection -ComputerName "pollux.tolife.app" -Port 10051 -InformationLevel Quiet)
+    $pzabbixServerIP = (Test-NetConnection -ComputerName "136.112.57.247" -Port 10051 -InformationLevel Quiet)
+    $pzabbixAgentLocal = (Test-NetConnection -ComputerName "localhost" -Port 10050 -InformationLevel Quiet)
+    $pzabbixAgentIP = (Test-NetConnection -ComputerName "127.0.0.1" -Port 10050 -InformationLevel Quiet)
+
+
+
+
+    #$panydesk = (Test-NetConnection -ComputerName "127.0.0.1" -Port 7070).TcpTestSucceeded
+    return "exit port 10051:byDNS=$($pzabbixServerDns) byIP=$($pzabbixServerIP)  | entrance port 10050 :byDNS=$($pzabbixAgentLocal) byIP=$($pzabbixAgentIP)"
+}
+
 #----------------------------------------------------------------------------
 # Connectivity checks
 function Test-Ping {
@@ -89,7 +109,7 @@ function Internet-OK {
 
     }
     elseif ((($ping -and $http) -and !($dns)) -or ($http -and !($dns) )) {
-
+        
         $script:countDnsFailure++
         Write-Log "Houve um problema com a resolução de nomes... contagem: $($script:countDnsFailure)"
         (ChangeDns)
@@ -142,7 +162,8 @@ Write-Log "Script iniciado."
 while ($true) {
 
     Write-Log "Tamanho do arquivo de log: $((Length-File($config.logFile)).ToString('F2')) MB"
-    
+    Write-Log (Blocked-Ports)
+
     if (((Ethernet-Chek) -eq "Disabled") -or ((Ethernet-Chek) -eq "Not Present")) {
         Write-Log "A rede cabeada estava desabilitada."
         (Enable-Ethernet)
